@@ -43,6 +43,8 @@ typedef struct timeOfDay {
   int minute;
 };
 
+timeOfDay feedTimes[6];
+
 char weekday[7][3] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 LiquidCrystal lcd(lcd_rs, lcd_enable, lcd_d4, lcd_d5, lcd_d6, lcd_d7);
 
@@ -65,7 +67,7 @@ void setup() {
   pinMode(scroll_btn, INPUT);
 
   delay(100);  //avoids confirm button being read high on startup
-  date_setup();  //temporary for testing, this will not be the first function called
+  SetFeedTimes();  //temporary for testing, this will not be the first function called
 }
 
 void loop() {
@@ -94,7 +96,68 @@ float ir_function() {
   return time_out;
 }
 
-timeOfDay time_set() {
+void SetFeedTimes()
+{
+  int selection = 0;
+  lcd.clear();
+  lcd.print("Select Feed Time");
+  lcd.setCursor(0, 1);
+  lcd.print("1 2 3 4 5 6 X");
+  lcd.setCursor(0, 1);
+  lcd.blink();
+
+  do
+  {
+    if (digitalRead(up_btn))
+    {
+      selection = (selection + 1) % 7; //7 options
+      lcd.setCursor(selection * 2, 1);
+      delay(500);
+    }
+    else if (digitalRead(down_btn))
+    {
+      selection = (selection + 6) % 7;
+      lcd.setCursor(selection * 2, 1);
+      delay(500);
+    }
+    else if (digitalRead(scroll_btn) && selection !=6) //disables/enables selected feed time
+    {
+      if (feedTimes[selection].minute == -1) //re-enable selection
+      {
+        lcd.print(selection + 1);
+        lcd.setCursor(selection * 2, 1);
+        feedTimes[selection].minute = 0;
+        feedTimes[selection].hour = 0;
+      }
+      else //disable selection
+      {
+        lcd.print("/");
+        lcd.setCursor(selection * 2, 1);
+        feedTimes[selection].minute = -1;
+        feedTimes[selection].hour = -1;
+      }
+
+      delay(500);
+    }
+    else if (digitalRead(confirm_btn) && selection != 6 && feedTimes[selection].minute != -1) //goes to time setting if selection is not disabled and selection is not to exit
+    {
+      delay(500);
+      feedTimes[selection] = SetTime();
+      delay(500);
+
+      //maybe worth putting screen setup in a separate function since this is all repeated code?
+      lcd.clear();
+      lcd.print("Select Feed Time");
+      lcd.setCursor(0, 1);
+      lcd.print("1 2 3 4 5 6 X");
+      lcd.setCursor(selection * 2, 1);
+      lcd.blink();
+    }
+  }while (!(digitalRead(confirm_btn) && selection == 6));
+  lcd.noBlink();
+}
+
+timeOfDay SetTime() { //this can prob be shorter but it works
   timeOfDay setTime = { 0, 0 };
   int cursorPos = 1;
   lcd.clear();
@@ -167,7 +230,7 @@ timeOfDay time_set() {
 void date_setup() {
   int minute = 0, hour = 0, day_week = 0, day_month = 1, month = 1, year = 0;
   //Set current time
-  timeOfDay currentTime = time_set();
+  timeOfDay currentTime = SetTime();
   hour = currentTime.hour;
   minute = currentTime.minute;
   lcd.clear();
