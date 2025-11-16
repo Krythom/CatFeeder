@@ -67,16 +67,12 @@ void setup() {
   pinMode(scroll_btn, INPUT);
 
   delay(100);  //avoids confirm button being read high on startup
-  SetFeedTimes();  //temporary for testing, this will not be the first function called
+  SetFeedTimes();
 }
 
 void loop() {
-
   time_check();
-
-  float food_level;
-
-  food_level = ir_function();
+  delay(1000);
 }
 
 float ir_function() {
@@ -100,7 +96,7 @@ void SetFeedTimes()
 {
   int selection = 0;
   lcd.clear();
-  lcd.print("Select Feed Time");
+  lcd.print("Edit Feed Times");
   lcd.setCursor(0, 1);
   lcd.print("1 2 3 4 5 6 X");
   lcd.setCursor(0, 1);
@@ -142,7 +138,7 @@ void SetFeedTimes()
     else if (digitalRead(confirm_btn) && selection != 6 && feedTimes[selection].minute != -1) //goes to time setting if selection is not disabled and selection is not to exit
     {
       delay(500);
-      feedTimes[selection] = SetTime();
+      feedTimes[selection] = SetTime(feedTimes[selection].hour, feedTimes[selection].minute);
       delay(500);
 
       //maybe worth putting screen setup in a separate function since this is all repeated code?
@@ -157,13 +153,23 @@ void SetFeedTimes()
   lcd.noBlink();
 }
 
-timeOfDay SetTime() { //this can prob be shorter but it works
-  timeOfDay setTime = { 0, 0 };
+timeOfDay SetTime(int hour, int minute) { //this can prob be shorter but it works
+  timeOfDay setTime = { hour, minute };
   int cursorPos = 1;
   lcd.clear();
   lcd.print("Set Time");
   lcd.setCursor(0, 1);
-  lcd.print("00:00");
+  if (hour < 10) 
+  {
+    lcd.print("0");
+  }
+  lcd.print(hour);
+  lcd.print(":");
+  if (minute < 10)
+  {
+    lcd.print("0");
+  }
+  lcd.print(minute);
   lcd.setCursor(1, 1);
   lcd.blink();
 
@@ -230,7 +236,7 @@ timeOfDay SetTime() { //this can prob be shorter but it works
 void date_setup() {
   int minute = 0, hour = 0, day_week = 0, day_month = 1, month = 1, year = 0;
   //Set current time
-  timeOfDay currentTime = SetTime();
+  timeOfDay currentTime = SetTime(0,0);
   hour = currentTime.hour;
   minute = currentTime.minute;
   lcd.clear();
@@ -328,9 +334,9 @@ void date_setup() {
 
 void time_check() {
   rtc.refresh();
-  lcd.setCursor(0, 0);
+  lcd.clear();
   for (int i = 0; i < 3; i++) {
-    lcd.print(weekday[(rtc.dayOfWeek() - 1)][i]);
+    lcd.print(weekday[(rtc.dayOfWeek())][i]);
   }
   lcd.print("/");
   lcd.print(rtc.day());
