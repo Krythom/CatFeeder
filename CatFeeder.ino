@@ -7,6 +7,7 @@
 #include "Arduino.h"
 #include "uRTCLib.h"
 #include <LiquidCrystal.h>
+#include <EEPROM.h>
 //libraries
 
 #define up_btn 13
@@ -66,21 +67,16 @@ void setup() {
   pinMode(confirm_btn, INPUT);
   pinMode(scroll_btn, INPUT);
 
+  //Load feed times from EEPROM
+  for (int i = 0; i < 6; i++) {
+    EEPROM.get(i * sizeof(timeOfDay), feedTimes[i]);
+  }
+
   delay(100);  //avoids confirm button being read high on startup
   SetFeedTimes();
 }
 
-int count = 0;
-void loop() 
-{
-  if (ReadButton(up_btn))
-  {
-    Serial.println(count++);
-  }
-}
-
-bool ReadButton(int inputPin)
-{
+void loop() {
 }
 
 float ir_function() {
@@ -100,27 +96,22 @@ float ir_function() {
   return time_out;
 }
 
-void SetFeedTimes()
-{
+void SetFeedTimes() {
   int selection = 0;
   bool screenSetup = true;
 
-  do
-  {
-    if (screenSetup) //avoid refreshing the full screen unless necessary
+  do {
+    if (screenSetup)  //avoid refreshing the full screen unless necessary
     {
       lcd.blink();
       lcd.clear();
       lcd.print("Edit Feed Times");
       lcd.setCursor(0, 1);
-      for (int i = 1; i < 7; i++)
-      {
-        if (feedTimes[i - 1].hour == -1) //disabled time
+      for (int i = 1; i < 7; i++) {
+        if (feedTimes[i - 1].hour == -1)  //disabled time
         {
           lcd.print("/ ");
-        }
-        else
-        {
+        } else {
           lcd.print(i);
           lcd.print(" ");
         }
@@ -130,28 +121,23 @@ void SetFeedTimes()
       screenSetup = false;
     }
 
-    if (digitalRead(up_btn))
-    {
-      selection = (selection + 1) % 7; //7 options
+    if (digitalRead(up_btn)) {
+      selection = (selection + 1) % 7;  //7 options
       lcd.setCursor(selection * 2, 1);
       delay(500);
-    }
-    else if (digitalRead(down_btn))
-    {
+    } else if (digitalRead(down_btn)) {
       selection = (selection + 6) % 7;
       lcd.setCursor(selection * 2, 1);
       delay(500);
-    }
-    else if (digitalRead(scroll_btn) && selection !=6) //disables/enables selected feed time
+    } else if (digitalRead(scroll_btn) && selection != 6)  //disables/enables selected feed time
     {
-      if (feedTimes[selection].minute == -1) //re-enable selection
+      if (feedTimes[selection].minute == -1)  //re-enable selection
       {
         lcd.print(selection + 1);
         lcd.setCursor(selection * 2, 1);
         feedTimes[selection].minute = 0;
         feedTimes[selection].hour = 0;
-      }
-      else //disable selection
+      } else  //disable selection
       {
         lcd.print("/");
         lcd.setCursor(selection * 2, 1);
@@ -160,32 +146,34 @@ void SetFeedTimes()
       }
 
       delay(500);
-    }
-    else if (digitalRead(confirm_btn) && selection != 6 && feedTimes[selection].minute != -1) //goes to time setting if selection is not disabled and selection is not to exit
+    } else if (digitalRead(confirm_btn) && selection != 6 && feedTimes[selection].minute != -1)  //goes to time setting if selection is not disabled and selection is not to exit
     {
       delay(500);
       feedTimes[selection] = SetTime(feedTimes[selection].hour, feedTimes[selection].minute);
       screenSetup = true;
       delay(500);
     }
-  }while (!(digitalRead(confirm_btn) && selection == 6));
+  } while (!(digitalRead(confirm_btn) && selection == 6));
   lcd.noBlink();
+
+  for (int i = 0; i < 6; i++)  //save the new feed times to eeprom
+  {
+    EEPROM.put(i * sizeof(timeOfDay), feedTimes[i]);
+  }
 }
 
-timeOfDay SetTime(int hour, int minute) { //this can prob be shorter but it works
+timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it works
   timeOfDay setTime = { hour, minute };
   int cursorPos = 1;
   lcd.clear();
   lcd.print("Set Time");
   lcd.setCursor(0, 1);
-  if (hour < 10) 
-  {
+  if (hour < 10) {
     lcd.print("0");
   }
   lcd.print(hour);
   lcd.print(":");
-  if (minute < 10)
-  {
+  if (minute < 10) {
     lcd.print("0");
   }
   lcd.print(minute);
@@ -255,7 +243,7 @@ timeOfDay SetTime(int hour, int minute) { //this can prob be shorter but it work
 void date_setup() {
   int minute = 0, hour = 0, day_week = 0, day_month = 1, month = 1, year = 0;
   //Set current time
-  timeOfDay currentTime = SetTime(0,0);
+  timeOfDay currentTime = SetTime(0, 0);
   hour = currentTime.hour;
   minute = currentTime.minute;
   lcd.clear();
@@ -326,7 +314,7 @@ void date_setup() {
     delay(500);
   } while (!digitalRead(confirm_btn));
   lcd.clear();
-  
+
   delay(2000);
 
   lcd.print("Set Year 20XX");
