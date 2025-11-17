@@ -70,9 +70,17 @@ void setup() {
   SetFeedTimes();
 }
 
-void loop() {
-  time_check();
-  delay(1000);
+int count = 0;
+void loop() 
+{
+  if (ReadButton(up_btn))
+  {
+    Serial.println(count++);
+  }
+}
+
+bool ReadButton(int inputPin)
+{
 }
 
 float ir_function() {
@@ -95,15 +103,33 @@ float ir_function() {
 void SetFeedTimes()
 {
   int selection = 0;
-  lcd.clear();
-  lcd.print("Edit Feed Times");
-  lcd.setCursor(0, 1);
-  lcd.print("1 2 3 4 5 6 X");
-  lcd.setCursor(0, 1);
-  lcd.blink();
+  bool screenSetup = true;
 
   do
   {
+    if (screenSetup) //avoid refreshing the full screen unless necessary
+    {
+      lcd.blink();
+      lcd.clear();
+      lcd.print("Edit Feed Times");
+      lcd.setCursor(0, 1);
+      for (int i = 1; i < 7; i++)
+      {
+        if (feedTimes[i - 1].hour == -1) //disabled time
+        {
+          lcd.print("/ ");
+        }
+        else
+        {
+          lcd.print(i);
+          lcd.print(" ");
+        }
+      }
+      lcd.print("X");
+      lcd.setCursor(selection * 2, 1);
+      screenSetup = false;
+    }
+
     if (digitalRead(up_btn))
     {
       selection = (selection + 1) % 7; //7 options
@@ -139,15 +165,8 @@ void SetFeedTimes()
     {
       delay(500);
       feedTimes[selection] = SetTime(feedTimes[selection].hour, feedTimes[selection].minute);
+      screenSetup = true;
       delay(500);
-
-      //maybe worth putting screen setup in a separate function since this is all repeated code?
-      lcd.clear();
-      lcd.print("Select Feed Time");
-      lcd.setCursor(0, 1);
-      lcd.print("1 2 3 4 5 6 X");
-      lcd.setCursor(selection * 2, 1);
-      lcd.blink();
     }
   }while (!(digitalRead(confirm_btn) && selection == 6));
   lcd.noBlink();
