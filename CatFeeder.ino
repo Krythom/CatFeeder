@@ -73,10 +73,10 @@ void setup() {
   }
 
   delay(100);  //avoids confirm button being read high on startup
-  SetFeedTimes();
 }
 
 void loop() {
+  time_check();
 }
 
 float ir_function() {
@@ -355,8 +355,16 @@ void time_check() {
   lcd.print(rtc.year());
 
   lcd.setCursor(0, 1);
+  if (rtc.hour() < 10)
+  {
+    lcd.print(0);
+  }
   lcd.print(rtc.hour());
   lcd.print(":");
+  if (rtc.minute ()< 10)
+  {
+    lcd.print(0);
+  }
   lcd.print(rtc.minute());
   delay(1000);
   //output should be:
