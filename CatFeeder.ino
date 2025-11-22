@@ -73,6 +73,7 @@ void setup() {
   }
 
   delay(100);  //avoids confirm button being read high on startup
+  SetFeedTimes();
 }
 
 void loop() {
@@ -203,7 +204,7 @@ timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it wor
         lcd.setCursor(cursorPos, 1);
       } else  //minutes
       {
-        setTime.minute = (setTime.minute + 5) % 60;
+        setTime.minute = (setTime.minute + 1) % 60;
         lcd.setCursor(3, 1);
         if (setTime.minute < 10) {
           lcd.print(0);
@@ -224,7 +225,7 @@ timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it wor
         lcd.setCursor(cursorPos, 1);
       } else  //minutes
       {
-        setTime.minute = (setTime.minute + 55) % 60;  //equivalent to -5
+        setTime.minute = (setTime.minute + 59) % 60;  //equivalent to -5
         lcd.setCursor(3, 1);
         if (setTime.minute < 10) {
           lcd.print(0);
