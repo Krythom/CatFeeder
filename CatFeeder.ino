@@ -47,6 +47,7 @@ typedef struct timeOfDay {
 timeOfDay feedTimes[6];
 
 char weekday[7][3] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+char months[12][3] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 LiquidCrystal lcd(lcd_rs, lcd_enable, lcd_d4, lcd_d5, lcd_d6, lcd_d7);
 
 void setup() {
@@ -73,7 +74,7 @@ void setup() {
   }
 
   delay(100);  //avoids confirm button being read high on startup
-  SetFeedTimes();
+  date_setup();
 }
 
 void loop() {
@@ -346,13 +347,14 @@ void time_check() {
   for (int i = 0; i < 3; i++) {
     lcd.print(weekday[(rtc.dayOfWeek())][i]);
   }
-  lcd.print("/");
+  lcd.print(" ");
+  for (int i = 0; i < 3; i++)
+  {
+    lcd.print(months[rtc.month()][i]);
+  }
+  lcd.print(" ");
   lcd.print(rtc.day());
-
-  lcd.print("/");
-  lcd.print(rtc.month());
-
-  lcd.print("/20");
+  lcd.print(" 20");
   lcd.print(rtc.year());
 
   lcd.setCursor(0, 1);
