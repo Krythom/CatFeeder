@@ -300,16 +300,16 @@ timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it wor
 }
 
 void date_setup() {
-  int minute = 0, hour = 0, day_week = 0, day_month = 1, month = 1, year = 0;
+  int minute = 0, hour = 0, day_week = 0, day_month = 1, month = 0, year = 0;
   //Set current time
   timeOfDay currentTime = SetTime(0, 0);
   hour = currentTime.hour;
   minute = currentTime.minute;
   lcd.clear();
-  delay(2000);
+  delay(500);
 
   lcd.print("Set Weekday");
-  do {  // set weekday (sun = 1, sat = 7)
+  do {  // set weekday (sun = 0, sat = 6)
     if (digitalRead(up_btn)) {
       day_week = (day_week + 1) % 7;
       delay(500);
@@ -323,58 +323,49 @@ void date_setup() {
     }
   } while (!digitalRead(confirm_btn));
   lcd.clear();
-  delay(2000);
+  delay(500);
 
   //TODO: maybe? add protection against setting fake dates
   lcd.print("Set Day of Month");
   do {  // set day of month
     if (digitalRead(up_btn)) {
       day_month++;
+      delay(500);
     } else if (digitalRead(down_btn)) {
       day_month--;
+      delay(500);
     }
-    if (day_month < 1) {
+    if (day_month < 1) { //left these ifs alone cause the modulo solution is kinda annoying to deal with when 0 isn't a valid number
       day_month = 31;
     } else if (day_month > 31) {
       day_month = 1;
-      lcd.clear();
-      //  lcd.setCursor(0, 0);
-      lcd.print("set day of month");
-    }
-    if (day_month < 10) {  // removes leading 0 from screen
-      lcd.clear();
-      lcd.print("set day of month");
     }
     lcd.setCursor(0, 1);
+    if (day_month < 10) 
+    {
+      lcd.print("0");
+    }
     lcd.print(day_month);
-    delay(500);
   } while (!digitalRead(confirm_btn));
   lcd.clear();
-  delay(2000);
+  delay(500);
 
   lcd.print("Set Month");
-  do {  // set month
+  do {  // set month (jan = 0, dec = 6)
     if (digitalRead(up_btn)) {
-      month++;
+      month = (month + 1) % 12;
+      delay(500);
     } else if (digitalRead(down_btn)) {
-      month--;
-    }
-    if (month < 1) {
-      month = 12;
-    } else if (month > 12) {
-      month = 1;
-    }
-    if (month < 10) {  // removes leading 0 from screen
-      lcd.clear();
-      lcd.print("Set Month");
+      month = (month + 11) % 12;
+      delay(500);
     }
     lcd.setCursor(0, 1);
-    lcd.print(month);
-    delay(500);
+    for (int i = 0; i < 3; i++) {
+      lcd.print(months[(month)][i]);
+    }
   } while (!digitalRead(confirm_btn));
   lcd.clear();
-
-  delay(2000);
+  delay(500);
 
   lcd.print("Set Year 20XX");
   do {  // set weekday (sun = 1, sat = 7)
@@ -392,10 +383,9 @@ void date_setup() {
     lcd.print(year);
   } while (!digitalRead(confirm_btn));
   lcd.clear();
-  delay(2000);
+  delay(500);
 
   rtc.set(0, minute, hour, day_week, day_month, month, year);
-  //rtc.set(second, minute, hour, dayOfWeek, dayOfMonth, month, year)
 }
 
 void time_check() {
