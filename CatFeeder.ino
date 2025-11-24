@@ -33,6 +33,7 @@
 uRTCLib rtc(0x68);
 void date_setup();
 void time_check();
+int lastMinute;
 
 #define ir_trigger 6
 #define ir_echo 7
@@ -47,7 +48,7 @@ typedef struct timeOfDay {
 timeOfDay feedTimes[6];
 
 char weekday[7][3] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-char months[12][3] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+char months[12][3] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 LiquidCrystal lcd(lcd_rs, lcd_enable, lcd_d4, lcd_d5, lcd_d6, lcd_d7);
 
 void setup() {
@@ -72,13 +73,25 @@ void setup() {
   for (int i = 0; i < 6; i++) {
     EEPROM.get(i * sizeof(timeOfDay), feedTimes[i]);
   }
-
+  
+  lastMinute = rtc.minute();
+  time_check();
   delay(100);  //avoids confirm button being read high on startup
-  date_setup();
 }
 
 void loop() {
-  time_check();
+  if (digitalRead(confirm_btn))
+  {
+    lcd.clear();
+    delay(500);
+    MainMenu();
+  }
+  rtc.refresh();
+  if (rtc.minute() != lastMinute) //only redraw screen when time has updated
+  {
+    lastMinute = rtc.minute();
+    time_check();
+  }
 }
 
 float ir_function() {
@@ -96,6 +109,48 @@ float ir_function() {
 
   delay(250);
   return time_out;
+}
+
+void MainMenu() {
+  int selection = 0;
+  lcd.clear();
+  lcd.print("1: Date Setup");
+  lcd.setCursor(0, 1);
+  lcd.print("2: Feed Times  X");
+  lcd.setCursor(0, 0);
+  lcd.blink();
+
+  do {
+    if (digitalRead(scroll_btn)) {
+      selection = (selection + 1) % 3;  // 3 options
+      switch (selection) {              //move cursor to appropriate location
+        case 0:
+          lcd.setCursor(0, 0);
+          break;
+        case 1:
+          lcd.setCursor(0, 1);
+          break;
+        case 2:
+          lcd.setCursor(15, 1);
+          break;
+      }
+      delay(500);
+    }
+  } while (!digitalRead(confirm_btn));
+
+  lcd.noBlink();
+  delay(500);
+  switch (selection) { //go to selsected menu
+    case 0:
+      date_setup();
+      break;
+    case 1:
+      SetFeedTimes();
+      break;
+    default:
+      time_check();
+      break;
+  }
 }
 
 void SetFeedTimes() {
@@ -162,6 +217,8 @@ void SetFeedTimes() {
   {
     EEPROM.put(i * sizeof(timeOfDay), feedTimes[i]);
   }
+
+  delay(500);
 }
 
 timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it works
@@ -348,8 +405,7 @@ void time_check() {
     lcd.print(weekday[(rtc.dayOfWeek())][i]);
   }
   lcd.print(" ");
-  for (int i = 0; i < 3; i++)
-  {
+  for (int i = 0; i < 3; i++) {
     lcd.print(months[rtc.month()][i]);
   }
   lcd.print(" ");
@@ -358,14 +414,12 @@ void time_check() {
   lcd.print(rtc.year());
 
   lcd.setCursor(0, 1);
-  if (rtc.hour() < 10)
-  {
+  if (rtc.hour() < 10) {
     lcd.print(0);
   }
   lcd.print(rtc.hour());
   lcd.print(":");
-  if (rtc.minute ()< 10)
-  {
+  if (rtc.minute() < 10) {
     lcd.print(0);
   }
   lcd.print(rtc.minute());
