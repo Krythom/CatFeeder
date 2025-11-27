@@ -91,6 +91,11 @@ void loop() {
   {
     lastMinute = rtc.minute();
     time_check();
+
+    //Check if current time == any of the feed times
+    //If yes call function to dispense food
+    //Either in dispense food function or after it call ir function
+    //If food level is low enough call another function to display an alert to refill food
   }
 }
 
@@ -248,7 +253,6 @@ timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it wor
         cursorPos = 1;
       }
       lcd.setCursor(cursorPos, 1);
-      //TODO: come up with a better button reading solution that doesn't require these delays
       delay(500);
     } else if (digitalRead(up_btn)) {
       if (cursorPos == 1)  //hours
@@ -414,8 +418,4 @@ void time_check() {
   }
   lcd.print(rtc.minute());
   delay(1000);
-  //output should be:
-
-  //day/dd/mm/yyyy
-  //hh:mm
 }
