@@ -8,6 +8,7 @@
 #include "uRTCLib.h"
 #include <LiquidCrystal.h>
 #include <EEPROM.h>
+#include <AccelStepper.h>
 //libraries
 
 #define up_btn 13
@@ -26,19 +27,24 @@
 #define motor_2 15
 #define motor_3 16
 #define motor_4 17
+#define MotorInterfaceType 4
 
-#define rtc_clock 18
-#define rtc_data 19
+void motor_control();
+
+#define rtc_clock 19
+#define rtc_data 18
 // uRTCLib rtc;
 uRTCLib rtc(0x68);
 void date_setup();
 void time_check();
 int lastMinute;
+int lastHour;
 
 #define ir_trigger 6
 #define ir_echo 7
 float ir_function();
-//nano pinouts
+float distance;
+//nano pinouts & variables
 
 typedef struct timeOfDay {
   int hour;
@@ -46,6 +52,7 @@ typedef struct timeOfDay {
 };
 
 timeOfDay feedTimes[6];
+AccelStepper myStepper(MotorInterfaceType, motor_1, motor_3, motor_2, motor_4);
 
 char weekday[7][3] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 char months[12][3] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -69,6 +76,10 @@ void setup() {
   pinMode(confirm_btn, INPUT);
   pinMode(scroll_btn, INPUT);
 
+  myStepper.setMaxSpeed(100.0);
+  myStepper.setAcceleration(50.0);
+  myStepper.setSpeed(10); 
+
   //Load feed times from EEPROM
   for (int i = 0; i < 6; i++) {
     EEPROM.get(i * sizeof(timeOfDay), feedTimes[i]);
@@ -90,7 +101,21 @@ void loop() {
   if (rtc.minute() != lastMinute) //only redraw screen when time has updated
   {
     lastMinute = rtc.minute();
+    lastHour = rtc.hour();
     time_check();
+
+for(int i = 0; i < 6; i++ ){
+      if(lastHour == feedTimes[i].hour){
+        if(lastMinute == feedTimes[i].minute){
+          motor_control();
+          delay(2500);
+          distance = ir_function();
+          if(distance < 400){
+            Serial.println("low food");
+          }
+        }
+    }
+}
 
     //Check if current time == any of the feed times
     //If yes call function to dispense food
@@ -418,4 +443,12 @@ void time_check() {
   }
   lcd.print(rtc.minute());
   delay(1000);
+}
+void motor_control(){
+  myStepper.move(1024);
+   if (myStepper.distanceToGo() != 0){
+    do{
+     myStepper.run();
+    }while(myStepper.distanceToGo() != 0);
+  }
 }
