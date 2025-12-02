@@ -176,7 +176,6 @@ void MainMenu() {
       break;
     case 1:
       SetFeedTimes();
-      break;
     default:
       time_check();
       break;
@@ -249,6 +248,7 @@ void SetFeedTimes() {
   }
 
   delay(500);
+
 }
 
 timeOfDay SetTime(int hour, int minute) {  //this can prob be shorter but it works
